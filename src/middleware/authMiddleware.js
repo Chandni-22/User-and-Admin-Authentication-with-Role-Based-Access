@@ -6,9 +6,9 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_TOKEN);
-        // console.log("Decoded token:", decoded); // Optional: for debugging
+        console.log("Decoded token:", decoded); // Optional: for debugging
         req.user = decoded;
-        // console.log("Getting tasks for user:", req.user);
+        console.log("Getting tasks for user:", req.user);
         next();
     } catch (err) {
         res.status(401).json({ message: "Invalid Token" });

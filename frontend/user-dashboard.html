@@ -1,125 +1,131 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>User Dashboard</title>
-    <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>User Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f2f2f2;
+    }
+    h2 {
+      color: #333;
+    }
+    button {
+      margin-top: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+    }
+    input, textarea {
+      width: 300px;
+      padding: 6px;
+    }
+    #taskList li {
+      margin-bottom: 6px;
+    }
+  </style>
 </head>
-
 <body>
-    <h1>User Dashboard</h1>
+  <h2>User Dashboard</h2>
 
-    <div id="task-list">
-        <h2>All Tasks</h2>
-        <ul id="tasks-container"></ul>
-    </div>
+  <section>
+    <h3>All Tasks</h3>
+    <ul id="taskList">
+      <li>Loading tasks...</li>
+    </ul>
+    <button onclick="loadTasks()">Reload Tasks</button>
+  </section>
 
-    <button id="show-create-form-btn">Create New Task</button>
+  <hr />
 
-    <div id="task-form" style="display: none; margin-top: 20px;">
-        <h2>Create Task</h2>
-        <form id="create-task-form">
-            <label>Title: <input type="text" id="title" required /></label><br /><br />
-            <label>Description: <textarea id="description"></textarea></label><br /><br />
-            <button type="submit">Submit Task</button>
-        </form>
-    </div>
+  <section>
+    <h3>Create New Task</h3>
+    <label>Title:</label><br />
+    <input type="text" id="title" required /><br /><br />
 
-    <script>
-        const taskList = document.getElementById("tasks-container");
-        const taskForm = document.getElementById("task-form");
-        const showFormBtn = document.getElementById("show-create-form-btn");
+    <label>Description:</label><br />
+    <textarea id="description" rows="4" cols="30"></textarea><br /><br />
 
-        // Show the create task form
-        showFormBtn.addEventListener("click", () => {
-            taskForm.style.display = taskForm.style.display === "none" ? "block" : "none";
-        });
+    <button onclick="createTask()">Submit Task</button>
+  </section>
 
-        // Load tasks on page load
-        async function loadTasks() {
-            const token = localStorage.getItem("token");
+  <script>
+    const baseUrl = "http://localhost:5000/api";
+    const token = localStorage.getItem("token");
+    const taskList = document.getElementById("taskList");
 
-            if (!token) {
-                alert("You need to log in first.");
-                window.location.href = "/login"; // Redirect to login page
-                return;
-            }
+    if (!token) {
+      alert("No token found. Please login first.");
+      window.location.href = "/login.html"; // Redirect if token missing
+    }
 
-            try {
-                const res = await fetch("http://localhost:5000/api/user/tasks", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+    function loadTasks() {
+      taskList.innerHTML = "<li>Loading...</li>";
 
-                const tasks = await res.json();
-                taskList.innerHTML = "";
-
-                if (Array.isArray(tasks) && tasks.length > 0) {
-                    tasks.forEach((task) => {
-                        const li = document.createElement("li");
-                        li.textContent = `${task.title}: ${task.description}`;
-                        taskList.appendChild(li);
-                    });
-                } else {
-                    taskList.innerHTML = "<li>No tasks found.</li>";
-                }
-            } catch (err) {
-                taskList.innerHTML = "<li>Failed to load tasks.</li>";
-                console.error("Error loading tasks:", err); // Log error for debugging
-            }
+      fetch(`${baseUrl}/tasks`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
         }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Unauthorized or failed request");
+        return res.json();
+      })
+      .then(data => {
+        taskList.innerHTML = "";
+        if (data.length === 0) {
+          taskList.innerHTML = "<li>No tasks found.</li>";
+        } else {
+          data.forEach(task => {
+            const li = document.createElement("li");
+            li.textContent = `${task.title} - ${task.description || "No description"}`;
+            taskList.appendChild(li);
+          });
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        taskList.innerHTML = "<li>Failed to load tasks.</li>";
+        alert("Session expired or unauthorized. Please login again.");
+      });
+    }
 
-        // Submit task form
-        document.getElementById("create-task-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
+    function createTask() {
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
 
-            const title = document.getElementById("title").value.trim();
-            const description = document.getElementById("description").value.trim();
-            const token = localStorage.getItem("token");
+      if (!title) {
+        alert("Title is required.");
+        return;
+      }
 
-            if (!title) {
-                alert("Title is required.");
-                return;
-            }
+      fetch(`${baseUrl}/tasks`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ title, description })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert("Task created!");
+        document.getElementById("title").value = "";
+        document.getElementById("description").value = "";
+        loadTasks(); // Refresh task list
+      })
+      .catch(err => {
+        console.error("Create task error:", err);
+        alert("Failed to create task.");
+      });
+    }
 
-            if (!token) {
-                alert("You need to log in first.");
-                window.location.href = "/login"; // Redirect to login page
-                return;
-            }
-
-            try {
-                const res = await fetch("http://localhost:5000/api/tasks", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ title, description }),
-                });
-
-                const data = await res.json();
-
-                if (res.ok) {
-                    alert("Task created successfully!");
-                    document.getElementById("create-task-form").reset();
-                    taskForm.style.display = "none";
-                    loadTasks(); // Refresh task list
-                } else {
-                    alert(data.message || "Failed to create task.");
-                }
-            } catch (err) {
-                alert("Error creating task.");
-                console.error("Error creating task:", err); // Log error for debugging
-            }
-        });
-
-        // Initial load
-        loadTasks();
-    </script>
+    // Load tasks when page loads
+    loadTasks();
+  </script>
 </body>
-
 </html>
