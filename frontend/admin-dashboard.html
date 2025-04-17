@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <h1>Admin Dashboard</h1>
+    <ul id="admin-task-list"></ul>
+</body>
+<script>
+    window.addEventListener("DOMContentLoaded", async () => {
+        const token = localStorage.getItem("token");
+
+        if (!token || localStorage.getItem("role") !== "admin") {
+            alert("Access denied");
+            window.location.href = "login.html";
+            return;
+        }
+
+        try {
+            const res = await fetch("http://localhost:5000/api/admin/dashboard", {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                const container = document.getElementById("tasks");
+                data.tasks.forEach(task => {
+                    const div = document.createElement("div");
+                    div.textContent = `• ${task.title} (by ${task.user.name})`;
+                    container.appendChild(div);
+                });
+            } else {
+                alert("Failed to fetch admin tasks");
+            }
+        } catch (err) {
+            alert("Error: " + err.message);
+        }
+    });
+
+</script>
+
+</html>
