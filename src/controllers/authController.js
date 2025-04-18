@@ -5,10 +5,9 @@ const User = require('../models/User');
 const register = async (req, res) => {
     try {
         const {username, email, password} = req.body;
-        console.log("Registering user", req.body);
-        
-        
+
         const existingUser = await User.findOne({ email });
+
         if (existingUser) return res.status(400).json({ message: 'User already exists' });
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -44,15 +43,10 @@ const login = async (req, res) => {
             process.env.JWT_TOKEN,
             { expiresIn: "1h" }
         );
-
-        console.log("Token payload:", { id: user._id, role: user.role });
-
         res.json({
             token,
             role: user.role
         });
-
-        console.log("User logged in");
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }

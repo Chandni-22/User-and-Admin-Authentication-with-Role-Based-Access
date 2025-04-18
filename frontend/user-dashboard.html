@@ -1,56 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>User Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background-color: #f2f2f2;
-    }
-    h2 {
-      color: #333;
-    }
-    button {
-      margin-top: 10px;
-      padding: 6px 12px;
-      cursor: pointer;
-    }
-    input, textarea {
-      width: 300px;
-      padding: 6px;
-    }
-    #taskList li {
-      margin-bottom: 6px;
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
-  <h2>User Dashboard</h2>
+  <h1>User Dashboard</h1>
+  <div class="task">
+    <section id="createTask">
+      <h3>Create New Task</h3>
+      <label for="title">Title:</label><br />
+      <input type="text" id="title" required /><br /><br />
 
-  <section>
-    <h3>All Tasks</h3>
-    <ul id="taskList">
-      <li>Loading tasks...</li>
-    </ul>
-    <button onclick="loadTasks()">Reload Tasks</button>
-  </section>
+      <label for="description">Description:</label><br />
+      <textarea id="description" rows="4" cols="30"></textarea><br /><br />
 
-  <hr />
-
-  <section>
-    <h3>Create New Task</h3>
-    <label for="title">Title:</label><br />
-    <input type="text" id="title" required /><br /><br />
-
-    <label for="description">Description:</label><br />
-    <textarea id="description" rows="4" cols="30"></textarea><br /><br />
-
-    <button onclick="createTask()">Submit Task</button>
-  </section>
-
+      <button onclick="createTask()">Submit Task</button>
+    </section>
+    <section>
+      <h3>All Tasks</h3>
+      <ul id="taskList">
+        <li>Loading tasks...</li>
+      </ul>
+      <button onclick="loadTasks()">Reload Tasks</button>
+    </section>
+  </div>
   <script>
     const baseUrl = "http://localhost:5000/api";
     const token = localStorage.getItem("token");
@@ -58,40 +36,40 @@
 
     if (!token) {
       alert("No token found. Please login first.");
-      window.location.href = "/login.html"; // Redirect if token missing
+      window.location.href = "/login.html";
     }
 
     function loadTasks() {
       taskList.innerHTML = "<li>Loading...</li>";
 
-      fetch(`${baseUrl}/tasks`, {
+      fetch(`${baseUrl}/tasks/user/dashboard`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         }
       })
-      .then(res => {
-        if (!res.ok) throw new Error("Unauthorized or failed request");
-        return res.json();
-      })
-      .then(data => {
-        taskList.innerHTML = "";
-        if (data.length === 0) {
-          taskList.innerHTML = "<li>No tasks found.</li>";
-        } else {
-          data.forEach(task => {
-            const li = document.createElement("li");
-            li.textContent = `${task.title} - ${task.description || "No description"}`;
-            taskList.appendChild(li);
-          });
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        taskList.innerHTML = "<li>Failed to load tasks.</li>";
-        alert("Session expired or unauthorized. Please login again.");
-      });
+        .then(res => {
+          if (!res.ok) throw new Error("Unauthorized or failed request");
+          return res.json();
+        })
+        .then(data => {
+          taskList.innerHTML = "";
+          if (data.length === 0) {
+            taskList.innerHTML = "<li>No tasks found.</li>";
+          } else {
+            data.forEach(task => {
+              const li = document.createElement("li");
+              li.textContent = `${task.title} - ${task.description || "No description"}`;
+              taskList.appendChild(li);
+            });
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          taskList.innerHTML = "<li>Failed to load tasks.</li>";
+          alert("Session expired or unauthorized. Please login again.");
+        });
     }
 
     function createTask() {
@@ -111,21 +89,21 @@
         },
         body: JSON.stringify({ title, description })
       })
-      .then(res => res.json())
-      .then(data => {
-        alert("Task created!");
-        document.getElementById("title").value = "";
-        document.getElementById("description").value = "";
-        loadTasks(); // Refresh task list
-      })
-      .catch(err => {
-        console.error("Create task error:", err);
-        alert("Failed to create task.");
-      });
+        .then(res => res.json())
+        .then(data => {
+          alert("Task created!");
+          document.getElementById("title").value = "";
+          document.getElementById("description").value = "";
+          loadTasks();
+        })
+        .catch(err => {
+          console.error("Create task error:", err);
+          alert("Failed to create task.");
+        });
     }
 
-    // Load tasks when page loads
     loadTasks();
   </script>
 </body>
+
 </html>

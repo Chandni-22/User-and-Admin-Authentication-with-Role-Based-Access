@@ -13,9 +13,8 @@ const createTaskByUser = async (req, res) => {
         const newTask = new Task({
             title,
             description,
-            user: req.user.id,
+            userId: req.user.id,
         });
-
         await newTask.save();
         res.status(201).json({ message: 'Task created successfully', task: newTask });
     } catch (error) {
@@ -25,19 +24,19 @@ const createTaskByUser = async (req, res) => {
 
 // Get tasks by user
 const getTasksByUser = async (req, res) => {
+    const userId = req.user.id;
     try {
-        const tasks = await Task.find({ user: new mongoose.Types.ObjectId(req.user.id) });
+        const tasks = await Task.find({userId: userId});
         res.json(tasks);
     } catch (error) {
-        console.error("Error in getTasksByUser:", error);
         res.status(500).json({ error: error.message });
     }    
 };
 
 // Get all tasks by admin
-const getAllTasksByAdmin = async (res) => {
+const getAllTasksByAdmin = async (req, res) => {
     try {
-        const tasks = await Task.find().populate('user', 'username email');
+        const tasks = await Task.find().populate('userId','email');
         res.json(tasks);
     } catch (error) {
         res.status(500).json({ error: error.message });

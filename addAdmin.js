@@ -7,7 +7,6 @@ const User = require('./src/models/User');
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('MongoDB connected');
-
     return User.findOne({ email: 'admin@hyperverge.co' });
   })
   .then(existingAdmin => {
