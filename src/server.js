@@ -18,7 +18,7 @@ app.use("/api/auth", require("./routes/authRoute"));
 app.use("/api/tasks", require("./routes/taskRoute"));
 
 // Static files (Frontend)
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Optional test route to verify server is working
 app.get('/api/test', (req, res) => {
